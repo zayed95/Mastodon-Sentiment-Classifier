@@ -1,0 +1,29 @@
+SDA/
+├── api/                    # 🆕 FastAPI backend
+│   ├── main.py
+│   ├── routers/
+│   └── schemas.py
+├── config/                 # 🆕 Configuration files
+│   └── settings.py
+├── data/                   # (Existing)
+│   ├── processed/
+│   └── raw/
+├── models/                 # 🆕 Saved trained ML models
+├── notebooks/              # (Existing) Exploratory data analysis
+├── scripts/                # 🆕 Top-level execution scripts
+│   ├── run_scraper.py
+│   └── train_model.py
+├── src/                    # (Existing) Core business logic & ML pipeline
+│   ├── collection/
+│   ├── preprocessing/
+│   ├── labeling/
+│   ├── training/           # Needs model.py, train.py, evaluate.py
+│   └── enums.py
+├── tests/                  # 🆕 Unit and integration tests
+├── ui/                     # 🆕 Streamlit frontend
+│   └── app.py
+├── .env.example            # 🆕 Template for secrets
+├── .gitignore              # Should ignore data/, models/, .env, etc.
+├── docker-compose.yml      # 🆕 Easy local deployment
+├── README.md
+└── requirements.txt
