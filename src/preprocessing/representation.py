@@ -1,11 +1,11 @@
 import gensim.downloader as api
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from gensim.models import Word2Vec
-from src.enums import RepresentationMethod
+from src.SDAEnums import RepresentationMethod
 import pandas as pd
 import numpy as np
 
-class Represent:
+class Representation:
     def __init__(self, column: pd.Series):
         self.col = column
         self.model = None

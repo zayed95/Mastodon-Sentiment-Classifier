@@ -2,7 +2,7 @@ import os, time
 import requests
 import pandas as pd
 import logging
-from ..enums import LLM
+from ..SDAEnums import LLM
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -10,7 +10,7 @@ logger = logging.getLogger(name=__name__)
 
 class Model:
     def __init__(self, llm: LLM):
-        self.llm = LLM.value
+        self.llm = llm
         pass
     
     def validate_response(self, response) -> str:
@@ -18,17 +18,18 @@ class Model:
         data = response.json()
         raw_label = data["choices"][0]["message"]["content"].strip().lower()
         if raw_label not in ["positive", "negative", "neutral"]:
-            return "neutral"
+            return "ERROR"
+        return raw_label
         
-    def call_mdoel(self, prompt: str, text: str):
+    def call(self, text: str):
 
-        openrouter_url = os.getenv("OPENROUTER_API_KEY")
+        openrouter_url = os.getenv("OPENROUTER_URL")
         openrouter_api_key = os.getenv("OPENROUTER_API_KEY")
 
         url = f"{openrouter_url}/chat/completions"
 
         payload = {
-            "model": self.model,
+            "model": self.llm.value,
             "max_tokens": 10,
             "temperature": 0,
             "messages": [
@@ -83,9 +84,20 @@ class LabelingController:
         self.model = None
 
     def set_model(self, model: Model):
+        
         self.model = model
         
-    def run_pipeline(self, df: pd.DataFrame, model: Model) -> pd.DataFrame:
+    def run_pipeline(self, df: pd.DataFrame, llm: LLM) -> pd.DataFrame:
+        model = Model(llm=llm)
         self.set_model(model=model)
-        
+        labels = []
+        for idx in range(0, len(df), 5):
+            end = min(idx + 5, len(df))
+            batch = df.iloc[idx : end]
+            batch_labels = [model.call(text=text) for text in batch['processed_text']]
+
+            labels.extend(batch_labels)
+
+            time.sleep(10)
+        df['label'] = labels
         return df
