@@ -46,19 +46,43 @@ class TestLabeling(unittest.TestCase):
         mock_post.assert_called_once()
 
     @patch('src.labeling.labeling.Model.call')
-    @patch('src.labeling.labeling.time.sleep') # Mock sleep to speed up tests
+    @patch('src.labeling.labeling.time.sleep')
     def test_run_pipeline(self, mock_sleep, mock_call):
-        mock_call.side_effect = ["positive", "negative", "neutral"]
+        # 3 texts * 3 models = 9 calls
+        # Text 1: Majority "positive" (2 pos, 1 neg)
+        # Text 2: Majority "negative" (3 neg)
+        # Text 3: Tie (all different), fallback to GPT4o_MINI (pos)
+        mock_call.side_effect = [
+            "positive", "positive", "negative", # Text 1
+            "negative", "negative", "negative", # Text 2
+            "positive", "negative", "neutral"   # Text 3
+        ]
         
         df = pd.DataFrame({
-            'processed_text': ["I love this", "I hate this", "This is a book"]
+            'processed_text': ["Text 1", "Text 2", "Text 3"]
         })
         
-        result_df = self.controller.run_pipeline(df, self.llm)
+        result_df = self.controller.run_pipeline(df)
         
         self.assertIn('label', result_df.columns)
-        self.assertEqual(result_df['label'].tolist(), ["positive", "negative", "neutral"])
+        self.assertIn('GPT4o_MINI', result_df.columns)
+        self.assertIn('GEMINI_FLASH', result_df.columns)
+        self.assertIn('CLAUDE_HAIKU', result_df.columns)
+        
+        self.assertEqual(result_df['label'].tolist(), ["positive", "negative", "positive"])
         self.assertEqual(len(result_df), 3)
+        self.assertTrue('fleiss_kappa' in result_df.attrs)
+
+    def test_calculate_fleiss_kappa(self):
+        # Perfect agreement
+        labels_perfect = [["positive", "positive", "positive"], ["negative", "negative", "negative"]]
+        kappa_perfect = self.controller.calculate_fleiss_kappa(labels_perfect)
+        self.assertEqual(kappa_perfect, 1.0)
+
+        # No agreement at all (all different on all items)
+        labels_none = [["positive", "negative", "neutral"], ["positive", "negative", "neutral"]]
+        kappa_none = self.controller.calculate_fleiss_kappa(labels_none)
+        self.assertLess(kappa_none, 0.1) # Should be low or negative
 
 if __name__ == '__main__':
     unittest.main()
