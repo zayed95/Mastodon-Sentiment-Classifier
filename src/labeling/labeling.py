@@ -2,11 +2,17 @@ import os, time
 import requests
 import pandas as pd
 import logging
-from ..SDAEnums import LLM
+from enum import Enum
 from dotenv import load_dotenv
 
 load_dotenv()
 logger = logging.getLogger(name=__name__)
+
+class LLM(Enum):
+    
+    GPT4o_MINI = "openai/gpt-4o-mini"
+    GEMINI_FLASH = "google/gemini-2.5-flash"
+    CLAUDE_HAIKU = "anthropic/claude-3.5-haiku"
 
 class Model:
     def __init__(self, llm: LLM):

@@ -7,8 +7,7 @@ import sys
 # Add project root to path
 sys.path.append(os.getcwd())
 
-from src.labeling.labeling import Model, LabelingController
-from src.SDAEnums import LLM
+from src.labeling.labeling import Model, LabelingController, LLM
 
 class TestLabeling(unittest.TestCase):
 

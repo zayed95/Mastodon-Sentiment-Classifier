@@ -1,9 +1,16 @@
 import gensim.downloader as api
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from gensim.models import Word2Vec
-from src.SDAEnums import RepresentationMethod
 import pandas as pd
 import numpy as np
+from enum import Enum
+
+class RepresentationMethod(Enum):
+
+    BOW = "bag_of_words"
+    GLOVE = "glove"
+    TF_IDF = "tf_idf"
+    WORD2VEC = "word2vec"
 
 class Representation:
     def __init__(self, column: pd.Series):
