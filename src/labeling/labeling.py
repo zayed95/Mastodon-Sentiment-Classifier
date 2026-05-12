@@ -12,8 +12,8 @@ logger = logging.getLogger(name=__name__)
 class LLM(Enum):
     
     GPT4o_MINI = "openai/gpt-4o-mini"
-    GEMINI_FLASH = "google/gemini-2.5-flash"
-    CLAUDE_HAIKU = "anthropic/claude-3.5-haiku"
+    GEMINI_FLASH = "google/gemini-3.1-flash-lite"
+    GROK = "x-ai/grok-4.3"
 
 class Model:
     def __init__(self, llm: LLM):
@@ -95,60 +95,8 @@ class LabelingController:
     def __init__(self):
         self.models = [Model(llm=llm) for llm in LLM]
 
-    def calculate_fleiss_kappa(self, labels_matrix: list) -> float:
-        """
-        Calculates Fleiss' Kappa for inter-rater reliability among the models.
-        
-        :param labels_matrix: list of lists, where each inner list contains labels from models for one text.
-        :return: Fleiss' Kappa score.
-        """
-        N = len(labels_matrix)
-        if N == 0:
-            return 0.0
-        n = len(labels_matrix[0]) # Number of raters (models)
-        if n < 2:
-            return 1.0
-
-        # Identify all unique labels used
-        all_labels = set()
-        for row in labels_matrix:
-            all_labels.update(row)
-        
-        categories = sorted(list(all_labels))
-        k = len(categories)
-
-        # Create the M matrix: M[i][j] is the number of raters who assigned item i to category j
-        M = []
-        for row in labels_matrix:
-            counts = [row.count(cat) for cat in categories]
-            M.append(counts)
-
-        # pj: proportion of all assignments which were to the j-th category
-        pj = [0.0] * k
-        for j in range(k):
-            pj[j] = sum(M[i][j] for i in range(N)) / (N * n)
-        
-        Pe = sum(p**2 for p in pj)
-
-        # Pi: extent to which raters agree for the i-th item
-        Pi = [0.0] * N
-        for i in range(N):
-            # Sum of squares of counts - n, divided by n(n-1)
-            Pi[i] = (sum(M[i][j]**2 for j in range(k)) - n) / (n * (n - 1))
-        
-        P = sum(Pi) / N
-        
-        if Pe == 1:
-            return 1.0
-            
-        kappa = (P - Pe) / (1 - Pe)
-        return kappa
-
     def run_pipeline(self, df: pd.DataFrame, checkpoint_path: str = None) -> pd.DataFrame:
-        """
-        Runs the labeling pipeline by sending each text to 3 different LLMs.
-        Settles on a final label via majority voting and calculates Fleiss' Kappa.
-        """
+        
         all_results = []
         agreement_matrix = []
 
@@ -210,17 +158,12 @@ class LabelingController:
                 logger.info(f"Checkpoint saved to {checkpoint_path}")
 
             logger.info(f"Processed batch {idx//5 + 1}/{(len(df)-1)//5 + 1}")
-            time.sleep(10) # Delay to respect rate limits
+            time.sleep(12) # Delay to respect rate limits
 
-        # Combine results with original dataframe
+        
         results_df = pd.DataFrame(all_results)
         output_df = pd.concat([df.reset_index(drop=True), results_df], axis=1)
         
-        # Calculate and log inter-rater reliability
-        kappa = self.calculate_fleiss_kappa(agreement_matrix)
-        logger.info(f"Fleiss' Kappa (Inter-model agreement): {kappa:.4f}")
-        
-        # Store kappa in dataframe attributes for reference
-        output_df.attrs['fleiss_kappa'] = kappa
+
         
         return output_df

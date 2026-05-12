@@ -13,8 +13,8 @@ def get_args():
     parser = argparse.ArgumentParser(description="NLP Preprocessing Pipeline")
         
     # Input settings
-    parser.add_argument("--input", type=str, required=True)
-    parser.add_argument("--output", type=str, required=True)
+    parser.add_argument("--input", default="data/raw/scraped-data.csv", type=str, required=True)
+    parser.add_argument("--output", default="data/processed/processed-data.csv", type=str, required=True)
     parser.add_argument("--column_name", default="content", help="Column to clean")    
     # Toggles (Booleans)
     parser.add_argument("--translate", action="store_true", help="Translate non-English text")

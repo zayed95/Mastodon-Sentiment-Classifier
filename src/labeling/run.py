@@ -8,7 +8,6 @@ sys.path.append(os.getcwd())
 
 from src.labeling.labeling import LabelingController
 
-# Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
@@ -48,8 +47,6 @@ def main():
     labeled_df.to_csv(output_path, index=False)
     
     logging.info("Labeling process complete.")
-    kappa = labeled_df.attrs.get('fleiss_kappa', 0.0)
-    logging.info(f"Final Fleiss' Kappa: {kappa:.4f}")
 
 if __name__ == "__main__":
     main()
